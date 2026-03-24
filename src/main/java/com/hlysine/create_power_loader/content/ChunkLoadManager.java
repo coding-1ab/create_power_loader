@@ -3,8 +3,7 @@ package com.hlysine.create_power_loader.content;
 import com.hlysine.create_power_loader.CPLBlockEntityTypes;
 import com.hlysine.create_power_loader.CreatePowerLoader;
 import com.mojang.logging.LogUtils;
-import com.simibubi.create.foundation.utility.Pair;
-import io.github.fabricators_of_create.porting_lib.chunk.loading.PortingLibChunkManager;
+import net.createmod.catnip.data.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -13,6 +12,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.world.ForgeChunkManager;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.fml.LogicalSide;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -40,11 +42,13 @@ public class ChunkLoadManager {
         allLoaders.computeIfAbsent(mode, $ -> new WeakCollection<>()).remove(loader);
     }
 
-    public static void onServerWorldTick(Level level) {
-        if (level.isClientSide())
+    public static void onServerWorldTick(TickEvent.LevelTickEvent event) {
+        if (event.phase == TickEvent.Phase.END)
+            return;
+        if (event.side == LogicalSide.CLIENT)
             return;
 
-        MinecraftServer server = level.getServer();
+        MinecraftServer server = event.level.getServer();
         if (savedChunksDiscardCountdown == 0) {
             for (Map.Entry<UUID, Set<LoadedChunkPos>> entry : savedForcedChunks.entrySet()) {
                 unforceAllChunks(server, entry.getKey(), entry.getValue());
@@ -120,9 +124,9 @@ public class ChunkLoadManager {
         ServerLevel targetLevel = server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
         assert targetLevel != null;
         if (owner instanceof BlockPos) {
-            PortingLibChunkManager.forceChunk(targetLevel, CreatePowerLoader.MODID, (BlockPos) owner, chunkX, chunkZ, add, true);
+            ForgeChunkManager.forceChunk(targetLevel, CreatePowerLoader.MODID, (BlockPos) owner, chunkX, chunkZ, add, true);
         } else {
-            PortingLibChunkManager.forceChunk(targetLevel, CreatePowerLoader.MODID, (UUID) owner, chunkX, chunkZ, add, true);
+            ForgeChunkManager.forceChunk(targetLevel, CreatePowerLoader.MODID, (UUID) owner, chunkX, chunkZ, add, true);
         }
     }
 
@@ -130,7 +134,7 @@ public class ChunkLoadManager {
         return savedForcedChunks.remove(entityUUID);
     }
 
-    public static void validateAllForcedChunks(ServerLevel level, PortingLibChunkManager.TicketHelper helper) {
+    public static void validateAllForcedChunks(ServerLevel level, ForgeChunkManager.TicketHelper helper) {
         helper.getBlockTickets().forEach((blockPos, tickets) -> {
             LOGGER.debug("CPL: Inspecting level {} position {} which has {} non-ticking tickets and {} ticking tickets.",
                     level.dimension().location(),

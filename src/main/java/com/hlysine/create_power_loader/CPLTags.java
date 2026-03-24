@@ -1,8 +1,8 @@
 package com.hlysine.create_power_loader;
 
-import com.simibubi.create.foundation.utility.Lang;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
+import java.util.Collections;
+
+import net.createmod.catnip.lang.Lang;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -11,27 +11,30 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
 
 public class CPLTags {
-    public static <T> TagKey<T> optionalTag(Registry<T> registry,
+    public static <T> TagKey<T> optionalTag(IForgeRegistry<T> registry,
                                             ResourceLocation id) {
-        return TagKey.create(registry.key(), id);
+        return registry.tags()
+                .createOptionalTagKey(id, Collections.emptySet());
     }
 
-    public static <T> TagKey<T> forgeTag(Registry<T> registry, String path) {
-        return optionalTag(registry, new ResourceLocation("c", path));
+    public static <T> TagKey<T> forgeTag(IForgeRegistry<T> registry, String path) {
+        return optionalTag(registry, new ResourceLocation("forge", path));
     }
 
     public static TagKey<Block> forgeBlockTag(String path) {
-        return forgeTag(BuiltInRegistries.BLOCK, path);
+        return forgeTag(ForgeRegistries.BLOCKS, path);
     }
 
     public static TagKey<Item> forgeItemTag(String path) {
-        return forgeTag(BuiltInRegistries.ITEM, path);
+        return forgeTag(ForgeRegistries.ITEMS, path);
     }
 
     public static TagKey<Fluid> forgeFluidTag(String path) {
-        return forgeTag(BuiltInRegistries.FLUID, path);
+        return forgeTag(ForgeRegistries.FLUIDS, path);
     }
 
     public enum NameSpace {
@@ -83,7 +86,7 @@ public class CPLTags {
         AllEntityTags(NameSpace namespace, String path, boolean optional, boolean alwaysDatagen) {
             ResourceLocation id = new ResourceLocation(namespace.id, path == null ? Lang.asId(name()) : path);
             if (optional) {
-                tag = optionalTag(BuiltInRegistries.ENTITY_TYPE, id);
+                tag = optionalTag(ForgeRegistries.ENTITY_TYPES, id);
             } else {
                 tag = TagKey.create(Registries.ENTITY_TYPE, id);
             }
