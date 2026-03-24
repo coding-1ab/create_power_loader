@@ -7,9 +7,13 @@ plugins {
 }
 
 def secrets = new Properties()
-file("./secrets.properties").withInputStream {
-    stream -> secrets.load(stream)
+def secretsFile = file("./secrets.properties")
+if (secretsFile.exists()) {
+    secretsFile.withInputStream { stream -> secrets.load(stream) }
+} else {
+    logger.warn("secrets.properties was not found. Continuing without publish tokens; publish tasks may fail unless tokens are set via environment variables.")
 }
+def secretOrEnv = { String key -> secrets.getProperty(key, System.getenv(key) ?: "") }
 
 loom {
     mods {
@@ -229,13 +233,13 @@ publishMods {
     modLoaders.add("fabric")
 
     github {
-        accessToken = secrets.GITHUB_TOKEN
+        accessToken = secretOrEnv("GITHUB_TOKEN")
         repository = "hlysine/create_power_loader"
         commitish = "fabric"
     }
 
     modrinth {
-        accessToken = secrets.MODRINTH_TOKEN
+        accessToken = secretOrEnv("MODRINTH_TOKEN")
         projectId = "E9MuZ1zB"
         minecraftVersions.add(minecraft_version)
 
@@ -248,7 +252,7 @@ publishMods {
     }
 
     curseforge {
-        accessToken = secrets.CURSEFORGE_TOKEN
+        accessToken = secretOrEnv("CURSEFORGE_TOKEN")
         projectId = "976304"
         minecraftVersions.add(minecraft_version)
     }
