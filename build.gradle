@@ -2,7 +2,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'fabric-loom' version '1.5.+'
+    id 'fabric-loom' version '1.10.5'
     id 'me.modmuss50.mod-publish-plugin' version '0.4.5'
 }
 
@@ -68,10 +68,8 @@ repositories {
     // Put repositories for dependencies here
     // ForgeGradle automatically adds the Forge maven and Maven Central for you
 
-    maven {
-        name = 'tterrag maven'
-        url = 'https://maven.tterrag.com/'
-    }
+    // tterrag maven currently fails TLS validation in this environment.
+    // Keep mirror repositories below for the same artifacts.
     maven {
         // location of the maven that hosts JEI files before January 2023
         name = "Progwml6's maven"
@@ -105,6 +103,10 @@ repositories {
         url = "https://mvn.devos.one/releases/"
     }
     maven {
+        // Create ecosystem artifacts (Flywheel, Ponder)
+        url = "https://maven.createmod.net"
+    }
+    maven {
         // Forge Config API Port
         url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
     }
@@ -135,7 +137,6 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 
     modImplementation("com.tterrag.registrate_fabric:Registrate:${registrate_version}")
-    modImplementation("com.jozufozu.flywheel:flywheel-fabric-${flywheel_minecraft_version}:${flywheel_version}")
     modImplementation("com.jamieswhiteshirt:reach-entity-attributes:$reach_entity_attributes_version")
     modCompileOnly("com.simibubi.create:create-fabric-${create_minecraft_version}:${create_version}") {
         transitive = true
@@ -222,7 +223,7 @@ tasks.publishMods.dependsOn(tasks.assemble)
 tasks.publishMods.mustRunAfter(tasks.build)
 
 wrapper {
-    gradleVersion = '8.5'
+    gradleVersion = '8.12'
     distributionType = Wrapper.DistributionType.BIN
 }
 
